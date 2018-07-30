@@ -18,10 +18,12 @@ import Data.String          (IsString (..))
 
 data Ty a
     = TV a
-    | TArr (Ty a) (Ty a)
+    | Ty a :-> Ty a
     | TForall (Scope () Ty a)
     | TApp (Ty a) (Ty a)
   deriving Functor
+
+infixr 1 :->
 
 instance Applicative Ty where
     pure = TV
@@ -30,7 +32,7 @@ instance Applicative Ty where
 instance Monad Ty where
     return = TV
     TV x      >>= k = k x
-    TArr a b  >>= k = TArr (a >>= k) (b >>= k)
+    (a :-> b) >>= k = (a >>= k) :-> (b >>= k)
     TApp f x  >>= k = TApp (f >>= k) (x >>= k)
     TForall t >>= k = TForall (t >>>= k)
 
@@ -130,7 +132,7 @@ lam_ x t b = Lam t (abstract1 x b)
 
 tnf :: Ty b -> Ty b
 tnf (TV x) = TV x
-tnf (TArr a b) = TArr (tnf a) (tnf b)
+tnf (a :-> b) = tnf a :-> tnf b
 tnf (TForall a) = TForall (toScope $ tnf $ fromScope a)
 tnf (TApp a b) = case tnf a of
     TForall a' -> tnf $ instantiate1 b a'
@@ -160,7 +162,7 @@ class SExpr f where
 
 instance SExpr Ty where
     sexpr _ f (TV x)      = Left (f x)
-    sexpr i f (TArr a b)  = Right ["arr", sexpr' i f a, sexpr' i f b]
+    sexpr i f (a :-> b)   = Right ["arr", sexpr' i f a, sexpr' i f b]
     sexpr i f (TApp a b)  = Right [sexpr' i f a, sexpr' i f b]
     sexpr i f (TForall b) = Right [ "forall", sexpr' (i + 1) f' (fromScope b) ] where
         f' (F x)  = f x
@@ -197,7 +199,7 @@ instance SExpr2 Expr where
 -- Applications
 -------------------------------------------------------------------------------
 
-infixl 1 $$, @@
+infixl 2 $$, @@
 
 ($$) :: Expr b a -> Expr b a -> Expr b a
 ($$) = App
@@ -210,24 +212,24 @@ infixl 1 $$, @@
 -------------------------------------------------------------------------------
 
 idType_ :: Ty String
-idType_ = forall_ "n" (TArr "n" "n")
+idType_ = forall_ "n" $ "n" :-> "n"
 
 id_ :: Expr String String
 id_ = tyLam_ "a" $ lam_ "x" "a" "x"
 
 natType :: Ty String
-natType = forall_ "a" (TArr (TArr "a" "a") (TArr "a" "a"))
+natType = forall_ "a" $ ("a" :-> "a") :-> "a" :-> "a"
 
 zero :: Expr String String
-zero = tyLam_ "a" $ lam_ "f" (TArr "a" "a") $ lam_ "z" "a" "z"
+zero = tyLam_ "a" $ lam_ "f" ("a" :-> "a") $ lam_ "z" "a" "z"
 
 sucType :: Ty String
-sucType = TArr natType natType
+sucType = natType :-> natType
 
 suc :: Expr String String
 suc
     = lam_ "n" natType
-    $ tyLam_ "a" $ lam_ "f" (TArr "a" "a") $ lam_ "z" "a"
+    $ tyLam_ "a" $ lam_ "f" ("a" :-> "a") $ lam_ "z" "a"
     $ "n" @@ "a" $$ "f" $$ ("f" $$ "z")
 
 main :: IO ()
