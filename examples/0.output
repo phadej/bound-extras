@@ -1,0 +1,3 @@
+0 : (forall (arr (arr 0 0) (arr 0 0)))
+0 = (FN (fn (arr 0 0) (fn 0 2)))
+0 = (FN (fn (arr 0 0) (fn 0 2)))

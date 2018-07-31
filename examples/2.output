@@ -1,0 +1,3 @@
+2 : (forall (arr (arr 0 0) (arr 0 0)))
+2 = ((fn (forall (arr (arr 1 1) (arr 1 1))) (FN (fn (arr 1 1) (fn 1 (0 @1 2 (2 3)))))) ((fn (forall (arr (arr 1 1) (arr 1 1))) (FN (fn (arr 1 1) (fn 1 (0 @1 2 (2 3)))))) (FN (fn (arr 0 0) (fn 0 2)))))
+2 = (FN (fn (arr 0 0) (fn 0 (1 (1 2)))))
