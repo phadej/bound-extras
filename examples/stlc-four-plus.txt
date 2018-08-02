@@ -1,0 +1,5 @@
+four-plus : Nat
+four-plus = ((the
+    (-> Nat Nat Nat) (fn x (fn x0 (fold-Nat x0 (fn x1 (S x1)) x))))
+   2 2)
+four-plus = 4

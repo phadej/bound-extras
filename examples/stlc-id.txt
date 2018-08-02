@@ -1,0 +1,3 @@
+id : (-> Nat Nat)
+id = (the (-> Nat Nat) (fn x x))
+id = (the (-> Nat Nat) (fn x x))

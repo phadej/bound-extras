@@ -1,0 +1,7 @@
+suc : (-> (-> (-> a a) (-> a a)) (-> (-> a0 a0) (-> a0 a0)))
+suc = (fn
+   (the (-> (-> a a) (-> a a)) x)
+   (poly b (fn (the (-> b b) x0) (fn (the b x1) (x b x0 (x0 x1))))))
+suc = (fn
+   (the (-> (-> a a) (-> a a)) x)
+   (poly b (fn (the (-> b b) x0) (fn (the b x1) (x b x0 (x0 x1))))))

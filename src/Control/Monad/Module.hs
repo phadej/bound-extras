@@ -1,5 +1,9 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+-- | Right monad 'Module' type-class.
+--
+-- Most possible instances are omitted.
+-- The primary use-case for 'Module' is to power 'Bound.ScopeH.ScopeH'.
 module Control.Monad.Module where
 
 import Bound                     (Scope (..), (>>>=))
