@@ -22,6 +22,9 @@
 -- specialise _          _ = error "ill-kinded"
 -- @
 --
+-- Another applications are /bidirectional/ type-systems or representing
+-- normal forms with /normal/ and  /neutral/ terms,
+-- aka /introduction/ and /elimination/ terms.
 --  
 -- Look into @examples/@ directory for /System F/ and /Bidirectional STLC/
 -- implemented with a help of 'ScopeH'.
