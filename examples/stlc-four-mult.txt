@@ -1,0 +1,15 @@
+four-mult : Nat
+four-mult = ((the
+    (-> Nat Nat Nat)
+    (fn
+       x
+       (fn
+          x0
+          (fold-Nat
+             0
+             ((the
+                 (-> Nat Nat Nat) (fn x1 (fn x2 (fold-Nat x2 (fn x3 (S x3)) x1))))
+                x0)
+             x))))
+   2 2)
+four-mult = 4

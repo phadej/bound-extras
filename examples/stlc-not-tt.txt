@@ -1,0 +1,3 @@
+not-tt : Bool
+not-tt = ((the (-> Bool Bool) (fn x (if x #f #t))) #t)
+not-tt = #f

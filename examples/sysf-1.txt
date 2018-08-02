@@ -1,0 +1,6 @@
+1 : (-> (-> a a) (-> a a))
+1 = ((fn
+    (the (-> (-> a a) (-> a a)) x)
+    (poly b (fn (the (-> b b) x0) (fn (the b x1) (x b x0 (x0 x1))))))
+   (poly b0 (fn (the (-> b0 b0) x2) (fn (the b0 x3) x3))))
+1 = (poly b (fn (the (-> b b) x) (fn (the b x0) (x x0))))

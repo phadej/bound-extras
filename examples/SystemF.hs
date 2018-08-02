@@ -1,7 +1,9 @@
+{-# LANGUAGE DeriveFoldable        #-}
 {-# LANGUAGE DeriveFunctor         #-}
+{-# LANGUAGE DeriveTraversable     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
-module Main (main) where
+module SystemF (tests) where
 
 import Bound.Class          ((>>>=))
 import Bound.Scope
@@ -9,14 +11,18 @@ import Bound.ScopeH
 import Bound.Var            (Var (..))
 import Control.Monad        (ap)
 import Control.Monad.Module
+import Data.Bifoldable      (Bifoldable (..))
 import Data.Bifunctor       (Bifunctor (..))
+import Data.Bitraversable   (Bitraversable (..), bifoldMapDefault, bimapDefault)
 import Data.Functor.Classes (Eq1 (..), eq1)
 import Data.String          (IsString (..))
-import Test.Tasty           (defaultMain, testGroup)
+import System.FilePath      ((-<.>), (</>))
+import Test.Tasty           (TestTree, testGroup)
 import Test.Tasty.Golden    (goldenVsString)
-import System.FilePath ((</>), (-<.>))
 
 import qualified Data.ByteString.Lazy.UTF8 as UTF8
+
+import Pretty
 
 -------------------------------------------------------------------------------
 -- Types
@@ -32,7 +38,7 @@ data Ty a
     = TV a
     | Ty a :-> Ty a
     | TForall (Scope () Ty a)
-  deriving Functor
+  deriving (Functor, Foldable, Traversable)
 
 infixr 1 :->
 
@@ -81,6 +87,7 @@ data Expr b a
 instance IsString a => IsString (Expr b a) where
     fromString = V . fromString
 
+{-
 -- | In practice we should write Bitraversable instance, and use
 -- 'bimapDefault' as Bifunctor implementation.
 --
@@ -93,12 +100,23 @@ instance Bifunctor Expr where
         go (Lam t b) = Lam (fmap f t) (bimapScope f g b)
         go (Forall (ScopeH b)) = Forall $ ScopeH $
             bimap g (fmap (fmap f)) b
+-}
 
-bimapScope
-    :: Bifunctor t
-    => (k -> k') -> (a -> a')
-    -> Scope b (t k) a -> Scope b (t k') a'
-bimapScope k a (Scope s) = Scope (bimap k (fmap (bimap k a)) s)
+instance Bifunctor  Expr  where bimap     = bimapDefault
+instance Bifunctor  Expr' where bimap     = bimapDefault
+instance Bifoldable Expr  where bifoldMap = bifoldMapDefault
+instance Bifoldable Expr' where bifoldMap = bifoldMapDefault
+
+instance Bitraversable Expr' where
+    bitraverse f g = fmap Expr' . bitraverse g f . unExpr'
+
+instance Bitraversable Expr where
+    bitraverse f g = go where
+        go (V x)       = V <$> g x
+        go (App a b)   = App <$> go a <*> go b
+        go (TyApp a b) = TyApp <$> go a <*> traverse f b
+        go (Lam t b)   = Lam <$> traverse f t <*> bitraverseScope f g b
+        go (Forall s)  = Forall <$> bitransverseScopeH (bitraverse g) traverse f s
 
 instance Functor (Expr b) where
     fmap = second
@@ -128,9 +146,6 @@ overExpr' f = Expr' . f . unExpr'
 
 instance Functor (Expr' a) where
     fmap f = overExpr' (first f)
-
-instance Bifunctor Expr' where
-    bimap f g = overExpr' (bimap g f)
 
 instance Module (Expr' c) Ty where
     Expr' (V a) >>== _ = Expr' (V a)
@@ -176,48 +191,38 @@ nf (TyApp a b) = case nf a of
 -- Pretty
 -------------------------------------------------------------------------------
 
-class SExpr f where
-    sexpr :: Int -> (a -> String) -> f a -> Either String [String]
+instance Pretty a => Pretty (Ty a) where
+    ppr x = traverse ppr x >>= pprTy
 
-    sexpr' :: Int -> (a -> String) -> f a -> String
-    sexpr' i f x = either id (\ws -> "(" ++ unwords ws ++ ")") (sexpr i f x)
+pprTy :: Ty Doc -> PrettyM Doc
+pprTy (TV x)      = return x
+pprTy (a :-> b)   = sexpr (text "->") <$> traverse pprTy [a, b]
+pprTy (TForall s) = do
+    a <- text <$> fresh "a"
+    pprTy (instantiate1 (TV a) s)
 
-instance SExpr Ty where
-    sexpr _ f (TV x)      = Left (f x)
-    sexpr i f (a :-> b)   = Right ["arr", sexpr' i f a, sexpr' i f b]
-    sexpr i f (TForall b) = Right [ "forall", sexpr' (i + 1) f' (fromScope b) ] where
-        f' (F x)  = f x
-        f' (B ()) = show i
+instance (Pretty a, Pretty b) => Pretty (Expr b a) where
+    ppr x = bitraverse ppr ppr x >>= pprExpr
 
-class SExpr2 f where
-    sexpr2 :: Int -> (a -> String) -> (b -> String) -> f a b -> Either String [String]
+pprExpr :: Expr Doc Doc -> PrettyM Doc
+pprExpr (V x)       = return x
+pprExpr (App a b)   = pprApplications $ applications a ++ [Right b]
+pprExpr (TyApp a b) = pprApplications $ applications a ++ [Left b]
+pprExpr (Lam t b)   = do
+    x <- text <$> fresh "x"
+    t' <- pprTy t
+    b' <- pprExpr $ instantiate1 (V x) b
+    return $ sexpr (text "fn") [ sexpr "the" [t', x], b']
+pprExpr (Forall b) = do
+    t <- text <$> fresh "b"
+    b' <- pprExpr $ unExpr' $ instantiate1H (TV t) b
+    return $ sexpr (text "poly") [ t , b']
 
-    sexpr2' :: Int -> (a -> String) -> (b -> String) -> f a b -> String
-    sexpr2' i f g x = either id (\ws -> "(" ++ unwords ws ++ ")") (sexpr2 i f g x)
-
-instance SExpr2 Expr where
-    sexpr2 _ _ g (V x)       = Left (g x)
-    sexpr2 i f g (App a b)   = Right
-        $ map (either (('@' :) . sexpr' i f) (sexpr2' i f g))
-        $ applications a ++ [Right b]
-    sexpr2 i f g (TyApp a b) = Right
-        $ map (either (('@' :) . sexpr' i f) (sexpr2' i f g))
-        $ applications a ++ [Left b]
-    sexpr2 i f g (Lam t a)   = Right
-        [ "fn"
-        , sexpr' (i + 1) f t
-        , sexpr2' (i + 1) f g' (fromScope a)
-        ]
-      where
-        g' (F x)  = g x
-        g' (B ()) = show i
-    sexpr2 i f g (Forall a) = Right
-        [ "FN"
-        , sexpr2' (i + 1) f' g (unExpr' $ fromScopeH a)
-        ]
-      where
-        f' (F x)  = f x
-        f' (B ()) = show i
+pprApplications :: [Either (Ty Doc) (Expr Doc Doc)] -> PrettyM Doc
+pprApplications []       = return $ text "()"
+pprApplications (x : xs) = sexpr <$> pp x <*> traverse pp xs
+  where
+    pp = either pprTy pprExpr
 
 -- We output
 --   (0 1 2 3)
@@ -277,45 +282,45 @@ check' (Forall b) = do
 -- Identity function
 -------------------------------------------------------------------------------
 
--- idType_ :: Ty String
+-- idType_ :: Ty ShortText
 -- idType_ = forall_ "n" $ "n" :-> "n"
 
-id_ :: Expr String String
+id_ :: Expr ShortText ShortText
 id_ = tyLam_ "a" $ lam_ "x" "a" "x"
 
 -------------------------------------------------------------------------------
 -- Church numerals
 -------------------------------------------------------------------------------
 
-natType :: Ty String
+natType :: Ty ShortText
 natType = forall_ "a" $ ("a" :-> "a") :-> "a" :-> "a"
 
-zero :: Expr String String
+zero :: Expr ShortText ShortText
 zero = tyLam_ "a" $ lam_ "f" ("a" :-> "a") $ lam_ "z" "a" "z"
 
--- sucType :: Ty String
+-- sucType :: Ty ShortText
 -- sucType = natType :-> natType
 
-suc :: Expr String String
+suc :: Expr ShortText ShortText
 suc
     = lam_ "n" natType
     $ tyLam_ "a" $ lam_ "f" ("a" :-> "a") $ lam_ "z" "a"
     $ "n" @@ "a" $$ "f" $$ ("f" $$ "z")
 
-demo :: String -> Expr String String -> [String]
+demo :: String -> Expr ShortText ShortText -> [String]
 demo name e = case check e of
     Nothing ->
-        [ name ++ " = " ++ sexpr2' 0 id id e
+        [ name ++ " = " ++ pretty e
         , "DOESN'T TYPECHECK"
         ]
     Just t ->
-        [ name ++ " : " ++ sexpr'  0 id t
-        , name ++ " = " ++ sexpr2' 0 id id e
-        , name ++ " = " ++ sexpr2' 0 id id (nf e)
+        [ name ++ " : " ++ pretty t
+        , name ++ " = " ++ pretty e
+        , name ++ " = " ++ pretty (nf e)
         ]
 
-main :: IO ()
-main = defaultMain $ testGroup "System F"
+tests :: TestTree
+tests = testGroup "System F"
     [ demo' "id" id_
     , demo' "0" zero
     , demo' "suc" suc
@@ -323,6 +328,8 @@ main = defaultMain $ testGroup "System F"
     , demo' "2" (suc $$ (suc $$ zero))
     ]
   where
-    demo' name e = goldenVsString name ("examples" </> name -<.> "output")
+    demo' name e = goldenVsString name ("examples" </> name' -<.> "txt")
         $ return $ UTF8.fromString $ unlines
         $ demo name e
+      where
+        name' = "sysf-" ++ name

@@ -1,3 +1,0 @@
-suc : (arr (forall (arr (arr 0 0) (arr 0 0))) (forall (arr (arr 0 0) (arr 0 0))))
-suc = (fn (forall (arr (arr 1 1) (arr 1 1))) (FN (fn (arr 1 1) (fn 1 (0 @1 2 (2 3))))))
-suc = (fn (forall (arr (arr 1 1) (arr 1 1))) (FN (fn (arr 1 1) (fn 1 (0 @1 2 (2 3))))))
