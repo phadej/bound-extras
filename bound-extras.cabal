@@ -12,8 +12,14 @@ description:
   ScopeT b t f a ~ ScopeH b (t f) f a
   @
   .
+  'ScopeH' probably should be preferred over 'ScopeT'.
+  Latter is left here for completeness.
+  .
   Simple implementations of @ScopeH@ and @ScopeT@ would be similar
   (sans type arguments) to @Bound.Scope.Simple@.
+  .
+  Look into @examples/@ directory for /System F/ and /Bidirectional STLC/
+  implemented with a help of 'ScopeH'.
 
 license:      BSD-3-Clause
 license-file: LICENSE

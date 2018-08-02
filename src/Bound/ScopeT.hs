@@ -8,6 +8,9 @@
 #endif
 -- For NFData instance
 {-# LANGUAGE UndecidableInstances  #-}
+-- | 'ScopeT' scope, which allows substitute 'f' into 't f' to get new 't f'.
+--
+-- Consider using 'Bound.ScopeH.ScopeH', it might be clearer.
 module Bound.ScopeT (
     ScopeT (..),
     (>>>>=),
@@ -131,6 +134,7 @@ instance (Read b, Read1 (t f), Read1 f) => Read1 (ScopeT b t f) where
 -- Abstraction
 -------------------------------------------------------------------------------
 
+-- | Capture some free variables in an expression to yield a 'ScopeT' with bound variables in @b@.
 abstractT :: (Functor (t f), Monad f) => (a -> Maybe b) -> t f a -> ScopeT b t f a
 abstractT f e = ScopeT (fmap k e) where
     k y = case f y of
@@ -146,6 +150,7 @@ abstract1T :: (Functor (t f), Monad f, Eq a) => a -> t f a -> ScopeT () t f a
 abstract1T a = abstractT (\b -> if a == b then Just () else Nothing)
 {-# INLINE abstract1T #-}
 
+-- | Capture some free variables in an expression to yield a 'ScopeT' with bound variables in @b@. Optionally change the types of the remaining free variables.
 abstractTEither :: (Functor (t f),  Monad f) => (a -> Either b c) -> t f a -> ScopeT b t f c
 abstractTEither f e = ScopeT (fmap k e) where
     k y = case f y of

@@ -1,15 +1,31 @@
-
-
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
-#if __GLASGOW_HASKELL__ >= 805
-{-# LANGUAGE QuantifiedConstraints #-}
-#endif
--- For NFData instance
 {-# LANGUAGE UndecidableInstances  #-}
+-- | 'ScopeH' scope, which allows substitute 'f' into 'g' to get new 'g'.
+--
+-- Compare following signatures:
+--
+-- @
+-- 'instantiate1'  :: ... => m a -> 'Scope'  b   m a -> m a
+-- 'instantiate1H' :: ... => m a -> 'ScopeH' b f m a -> f a
+-- @
+--
+-- 'ScopeH' variant allows to encode e.g. Hindley-Milner types, where
+-- we diffentiate between @Poly@ and @Mono@-morphic types.
+--
+-- @
+-- specialise :: Poly a -> Mono a -> Poly a 
+-- specialise (Forall p) m = 'instantiate1H' m p
+-- specialise _          _ = error "ill-kinded"
+-- @
+--
+--  
+-- Look into @examples/@ directory for /System F/ and /Bidirectional STLC/
+-- implemented with a help of 'ScopeH'.
+--
 module Bound.ScopeH (
     ScopeH (..),
     -- * Abstraction
@@ -23,6 +39,7 @@ module Bound.ScopeH (
     toScopeH,
     -- * Bound variable manipulation
     lowerScopeH,
+    convertFromScope,
     splatH,
     bindingsH,
     mapBoundH,
@@ -118,11 +135,11 @@ instance (Read b, Read1 f, Read1 m) => Read1 (ScopeH b f m) where
         f' = liftReadsPrec f g
         g' = liftReadList f g
 
-
 -------------------------------------------------------------------------------
 -- Abstraction
 -------------------------------------------------------------------------------
 
+-- | Capture some free variables in an expression to yield a 'ScopeH' with bound variables in @b@.
 abstractH :: (Functor f, Monad m) => (a -> Maybe b) -> f a -> ScopeH b f m a
 abstractH f e = ScopeH (fmap k e) where
     k y = case f y of
@@ -135,6 +152,7 @@ abstract1H :: (Functor f, Monad m, Eq a) => a -> f a -> ScopeH () f m a
 abstract1H a = abstractH (\b -> if a == b then Just () else Nothing)
 {-# INLINE abstract1H #-}
 
+-- | Capture some free variables in an expression to yield a 'ScopeH' with bound variables in @b@. Optionally change the types of the remaining free variables.
 abstractHEither :: (Functor f,  Monad m) => (a -> Either b c) -> f a -> ScopeH b f m c
 abstractHEither f e = ScopeH (fmap k e) where
     k y = case f y of
@@ -203,6 +221,9 @@ lowerScopeH
     -> (forall x. m x -> h x)
     -> ScopeH b f m a -> Scope b h a
 lowerScopeH f m (ScopeH x) = Scope (f (fmap (fmap m) x))
+
+convertFromScope :: Scope b f a -> ScopeH b f f a
+convertFromScope (Scope x) = ScopeH x
 
 -------------------------------------------------------------------------------
 -- Extras
