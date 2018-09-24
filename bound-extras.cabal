@@ -1,6 +1,7 @@
 cabal-version: 2.2
 name:          bound-extras
 version:       0
+x-revision:    1
 
 synopsis: ScopeH and ScopeT extras for bound
 category: Language, Compilers, Interpreters
