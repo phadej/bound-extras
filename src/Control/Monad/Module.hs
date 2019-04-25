@@ -49,7 +49,7 @@ transAction tma amb = tma >>= lift . amb
 composeAction :: (Functor f, Monad m) => Compose f m a -> (a -> m b) -> Compose f m b
 composeAction (Compose fma) amb = Compose (fmap (>>= amb) fma)
 
-instance Monad m => Module m Identity where
+instance Functor f => Module f Identity where
     fa >>== k = fmap (runIdentity . k) fa
 
 instance Monad m => Module (Scope b m) m where
