@@ -29,7 +29,9 @@ maintainer:         Oleg Grenrus <oleg.grenrus@iki.fi>
 homepage:           https://github.com/phadej/bound-extras
 bug-reports:        https://github.com/phadej/bound-extras/issues
 tested-with:        GHC ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.5 || ==8.8.1
-extra-source-files: CHANGELOG.md examples/*.txt
+extra-source-files:
+  CHANGELOG.md
+  examples/*.txt
 
 source-repository head
   type:     git
@@ -52,8 +54,7 @@ library
     , transformers  ^>=0.5.0.0
 
   -- other deps
-  build-depends:
-    , bound         ^>=2.0.1
+  build-depends:    bound ^>=2.0.1
 
   if !impl(ghc >=8.2)
     build-depends: bifunctors ^>=5.5.3
