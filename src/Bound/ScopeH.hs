@@ -199,7 +199,7 @@ instantiate1H e = instantiateH (const e)
 -- | Enter a 'ScopeH', and instantiate all bound and free variables in one go.
 instantiateHEither :: Module f m => (Either b a -> m c) -> ScopeH b f m a -> f c
 instantiateHEither f (ScopeH e) = e >>== \v -> case v of
-    B b -> f (Left b)
+    B b  -> f (Left b)
     F ea -> ea >>= f . Right
 {-# INLINE instantiateHEither #-}
 

@@ -11,8 +11,9 @@ module Pretty (
     ) where
 
 import Control.Monad.Trans.State.Strict
+import Data.Char                        (isDigit)
 import Data.Text.Short                  (ShortText)
-import Data.Char (isDigit)
+import Data.Void                        (Void, absurd)
 
 import qualified Data.Text.Short  as TS
 import qualified Text.PrettyPrint as PP
@@ -61,3 +62,6 @@ instance Pretty ShortText where
     ppr t = do
         markUsed t
         return $ PP.text $ TS.unpack t
+
+instance Pretty Void where
+    ppr = absurd

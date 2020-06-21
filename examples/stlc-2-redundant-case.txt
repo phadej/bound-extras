@@ -1,0 +1,3 @@
+redundant-case : B
+redundant-case = (the B (case+ aorb x (case+ aorb x0 (aa2b x x0) y0 y0) y y))
+redundant-case = (case+ aorb x (case+ aorb x0 (aa2b x x0) y0 y0) y y)

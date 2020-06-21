@@ -1,0 +1,3 @@
+app-delta : D
+app-delta = ((the (-> C D) (case+ aorb x (ac2d x) y (bc2d y))) c)
+app-delta = (case+ aorb x (ac2d x c) y (bc2d y c))
