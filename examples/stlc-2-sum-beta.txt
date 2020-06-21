@@ -1,0 +1,3 @@
+sum-beta : C
+sum-beta = (the C (case+ (the (sum A B) (inl a)) x (a2c x) y (b2c y)))
+sum-beta = (a2c a)

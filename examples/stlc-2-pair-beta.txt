@@ -1,0 +1,3 @@
+pair-beta : A
+pair-beta = (fst (the (prod A B) (pair a b)))
+pair-beta = a

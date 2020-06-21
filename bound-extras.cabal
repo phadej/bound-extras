@@ -64,6 +64,7 @@ test-suite examples
   main-is:          Examples.hs
   other-modules:
     BiSTLC
+    BiSTLC2
     Pretty
     SystemF
 

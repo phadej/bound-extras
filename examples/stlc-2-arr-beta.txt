@@ -1,0 +1,3 @@
+arr-beta : B
+arr-beta = ((the (-> A B) (fn x (f x))) a)
+arr-beta = (f a)
