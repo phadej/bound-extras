@@ -100,6 +100,9 @@ instance Module Chk Inf where
     If c t e      >>== k = If (c >>== k) (t >>== k) (e >>== k)
     FoldNat z s n >>== k = FoldNat (z >>== k) (s >>== k) (n >>== k)
 
+instance LiftedModule Chk Inf where
+    mlift = Inf
+
 lam_ :: Eq a => a -> Chk a -> Chk a
 lam_ x b = Lam (abstract1H x b)
 

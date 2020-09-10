@@ -20,6 +20,8 @@ module Bound.ScopeT (
     abstractTName, abstract1TName,
     -- * Instantiation
     instantiateT, instantiate1T, instantiateTEither,
+    -- * Lifting
+    liftScopeT,
     -- * Traditional de Bruijn
     fromScopeT,
     toScopeT,
@@ -41,7 +43,7 @@ module Bound.ScopeT (
 import Bound                (Bound (..), Scope (..), Var (..))
 import Bound.Name           (Name (..))
 import Control.DeepSeq      (NFData (..))
-import Control.Monad.Module (Module (..))
+import Control.Monad.Module (Module (..), LiftedModule (..))
 import Data.Bifoldable      (bifoldMap, bitraverse_)
 import Data.Bifunctor       (bimap)
 import Data.Bitraversable   (Bitraversable (..))
@@ -87,6 +89,14 @@ instance (forall f. Functor f => Functor (t f)) => Bound (ScopeT n t) where
 
 instance (Monad f, Functor (t f)) => Module (ScopeT b t f) f where
     (>>==) = (>>>>=)
+
+instance (Monad f, Monad (t f)) => LiftedModule (ScopeT b t f) f where
+    mlift = liftScopeT
+
+-- we can define this, as we need Monad (t m).
+-- QuantifiedConstraint for transformers would solve that.
+-- instance MonadTrans (ScopeT b t) where
+--     lift = mlift
 
 instance (Hashable b, Bound t, Monad f, Hashable1 f, Hashable1 (t f)) => Hashable1 (ScopeT b t f) where
     liftHashWithSalt h s m = liftHashWithSalt (liftHashWithSalt h) s (fromScopeT m)
@@ -197,6 +207,14 @@ instantiateTEither f (ScopeT e) = e >>>= \v -> case v of
     B b -> f (Left b)
     F ea -> ea >>= f . Right
 {-# INLINE instantiateTEither #-}
+
+-------------------------------------------------------------------------------
+-- Lifting
+-------------------------------------------------------------------------------
+
+liftScopeT:: forall t f a b. (Monad (t f)) => f a -> ScopeT b t f a
+liftScopeT = ScopeT . return . F
+{-# INLINE liftScopeT #-}
 
 -------------------------------------------------------------------------------
 -- Traditional de Bruijn

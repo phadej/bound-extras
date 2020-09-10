@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE UndecidableInstances  #-}
 -- | 'ScopeH' scope, which allows substitute 'f' into 'g' to get new 'g'.
 --
@@ -37,6 +38,8 @@ module Bound.ScopeH (
     abstractHName, abstract1HName,
     -- * Instantiation
     instantiateH, instantiate1H, instantiateHEither,
+    -- * Lifting
+    liftScopeH,
     -- * Traditional de Bruijn
     fromScopeH,
     toScopeH,
@@ -60,7 +63,7 @@ module Bound.ScopeH (
 import Bound                (Scope (..), Var (..))
 import Bound.Name           (Name (..))
 import Control.DeepSeq      (NFData (..))
-import Control.Monad.Module (Module (..))
+import Control.Monad.Module (Module (..), LiftedModule (..))
 import Data.Bifoldable      (bifoldMap, bitraverse_)
 import Data.Bifunctor       (bimap)
 import Data.Bitraversable   (Bitraversable (..))
@@ -81,6 +84,9 @@ newtype ScopeH b f m a = ScopeH { unscopeH :: f (Var b (m a)) }
 
 instance (Functor f, Monad m) => Module (ScopeH b f m) m where
     ScopeH s >>== k = ScopeH $ fmap (fmap (>>= k)) s
+
+instance LiftedModule f m => LiftedModule (ScopeH b f m) m where
+    mlift = liftScopeH
 
 -------------------------------------------------------------------------------
 -- Instances
@@ -202,6 +208,14 @@ instantiateHEither f (ScopeH e) = e >>== \v -> case v of
     B b  -> f (Left b)
     F ea -> ea >>= f . Right
 {-# INLINE instantiateHEither #-}
+
+-------------------------------------------------------------------------------
+-- Lifting
+-------------------------------------------------------------------------------
+
+liftScopeH:: forall f m a b. LiftedModule f m => m a -> ScopeH b f m a
+liftScopeH m = ScopeH (mlift (return (F m) :: m (Var b (m a))))
+{-# INLINE liftScopeH #-}
 
 -------------------------------------------------------------------------------
 -- Traditional de Bruijn
