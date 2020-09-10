@@ -54,3 +54,12 @@ instance Functor f => Module f Identity where
 
 instance Monad m => Module (Scope b m) m where
     (>>==) = (>>>=)
+
+-- | An extension of 'Module' allowing to lift @m a@ info @f a@.
+-- As we have @'Monad' m@, this allows to have a pseudo-return for @f@:
+-- @point . return :: a -> f a@
+--
+-- /Note:/ for @f = t m@ for some @'MonadTrans' t@ @'mlift' = 'lift'@.
+--
+class Module f m => LiftedModule f m where
+    mlift :: m a -> f a

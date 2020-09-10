@@ -1,7 +1,6 @@
 cabal-version:      2.2
 name:               bound-extras
-version:            0.0.1
-x-revision:         3
+version:            0.0.2
 synopsis:           ScopeH and ScopeT extras for bound
 category:           Language, Compilers, Interpreters
 description:
@@ -28,7 +27,9 @@ author:             Oleg Grenrus, Edward Kmett
 maintainer:         Oleg Grenrus <oleg.grenrus@iki.fi>
 homepage:           https://github.com/phadej/bound-extras
 bug-reports:        https://github.com/phadej/bound-extras/issues
-tested-with:        GHC ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.5 || ==8.8.3 || ==8.10.1
+tested-with:
+  GHC ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.5 || ==8.8.4 || ==8.10.2
+
 extra-source-files:
   CHANGELOG.md
   examples/*.txt
@@ -63,6 +64,7 @@ test-suite examples
   type:             exitcode-stdio-1.0
   main-is:          Examples.hs
   other-modules:
+    Adjunctions
     BiSTLC
     BiSTLC2
     Pretty
@@ -72,6 +74,7 @@ test-suite examples
   hs-source-dirs:   examples
   ghc-options:      -Wall
   build-depends:
+    , adjunctions   ^>=4.4
     , base
     , bound
     , bound-extras

@@ -119,6 +119,9 @@ instance ty ~ ty' => Module (Chk ty) (Inf ty') where
     Inr y         >>== k = Inr (y >>== k)
     Case e c1 c2  >>== k = Case (e >>= k) (c1 >>== k) (c2 >>== k)
 
+instance ty ~ ty' => LiftedModule (Chk ty) (Inf ty') where
+    mlift = Inf
+
 lam_ :: Eq a => a -> Chk ty a -> Chk ty a
 lam_ x b = Lam (abstract1H x b)
 
@@ -135,8 +138,8 @@ instance Pretty Ty where
 pprTy :: Ty -> Doc
 pprTy (Ty t)    = text (TS.unpack t)
 pprTy TUnit     = text "Unit"
-pprTy (a :*: b)  = sexpr (text "prod") [pprTy a, pprTy b]
-pprTy (a :+: b)  = sexpr (text "sum") [pprTy a, pprTy b]
+pprTy (a :*: b) = sexpr (text "prod") [pprTy a, pprTy b]
+pprTy (a :+: b) = sexpr (text "sum") [pprTy a, pprTy b]
 pprTy (a :-> b) = sexpr (text "->") $ map pprTy $ a : peelArr b
 
 instance (Pretty a, Pretty ty) => Pretty (Inf ty a) where ppr x = traverse ppr x >>= pprInf
@@ -182,8 +185,6 @@ pprChk (Case e c1 c2) = do
     c1' <- pprChk (instantiate1H (V n1) c1)
     c2' <- pprChk (instantiate1H (V n2) c2)
     return $ sexpr (text "case+") [e', n1, c1', n2, c2']
-    
-
 
 -- We output
 --   (0 1 2 3)
