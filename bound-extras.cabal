@@ -68,6 +68,7 @@ test-suite examples
     Adjunctions
     BiSTLC
     BiSTLC2
+    BiSTLC3
     Pretty
     SystemF
 
