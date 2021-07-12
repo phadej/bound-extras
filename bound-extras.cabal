@@ -69,6 +69,7 @@ test-suite examples
     BiSTLC
     BiSTLC2
     BiSTLC3
+    BiSTLC4
     Pretty
     SystemF
 
