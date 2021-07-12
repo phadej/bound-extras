@@ -1,0 +1,14 @@
+eta-fun : (-> B C D)
+eta-fun = (eta (-> B C D) (emb bc2d))
+eta-fun = (the
+   (-> B C D)
+   (fn
+      x
+      (fn
+         x0
+         (emb
+            (eta
+               D
+               (emb
+                  ((the (-> C D) (emb ((the (-> B C D) (emb bc2d)) (emb x))))
+                     (emb x0))))))))

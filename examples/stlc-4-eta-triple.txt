@@ -1,0 +1,34 @@
+eta-triple : (prod A (prod B (prod C Unit)))
+eta-triple = (eta (prod A (prod B (prod C Unit))) (emb triple))
+eta-triple = (the
+   (prod A (prod B (prod C Unit)))
+   (pair
+      (emb
+         (eta
+            A (emb (fst (the (prod A (prod B (prod C Unit))) (emb triple))))))
+      (pair
+         (emb
+            (eta
+               B
+               (emb
+                  (fst
+                     (the
+                        (prod B (prod C Unit))
+                        (emb (snd (the (prod A (prod B (prod C Unit))) (emb triple)))))))))
+         (pair
+            (emb
+               (eta
+                  C
+                  (emb
+                     (fst
+                        (the
+                           (prod C Unit)
+                           (emb
+                              (snd
+                                 (the
+                                    (prod B (prod C Unit))
+                                    (emb
+                                       (snd
+                                          (the
+                                             (prod A (prod B (prod C Unit))) (emb triple))))))))))))
+            uno))))
