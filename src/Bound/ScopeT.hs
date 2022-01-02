@@ -212,6 +212,9 @@ instantiateTEither f (ScopeT e) = e >>>= \v -> case v of
 -- Lifting
 -------------------------------------------------------------------------------
 
+-- |
+--
+-- @since 0.0.2
 liftScopeT:: forall t f a b. (Monad (t f)) => f a -> ScopeT b t f a
 liftScopeT = ScopeT . return . F
 {-# INLINE liftScopeT #-}

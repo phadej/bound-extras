@@ -213,6 +213,9 @@ instantiateHEither f (ScopeH e) = e >>== \v -> case v of
 -- Lifting
 -------------------------------------------------------------------------------
 
+-- |
+--
+-- @since 0.0.2
 liftScopeH:: forall f m a b. LiftedModule f m => m a -> ScopeH b f m a
 liftScopeH m = ScopeH (mlift (return (F m) :: m (Var b (m a))))
 {-# INLINE liftScopeH #-}

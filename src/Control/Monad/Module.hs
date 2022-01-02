@@ -61,5 +61,6 @@ instance Monad m => Module (Scope b m) m where
 --
 -- /Note:/ for @f = t m@ for some @'MonadTrans' t@ @'mlift' = 'lift'@.
 --
+-- @since 0.0.2
 class Module f m => LiftedModule f m where
     mlift :: m a -> f a
