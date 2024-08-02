@@ -3,9 +3,7 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
-#if __GLASGOW_HASKELL__ >= 805
 {-# LANGUAGE QuantifiedConstraints #-}
-#endif
 -- For NFData instance
 {-# LANGUAGE UndecidableInstances  #-}
 -- | 'ScopeT' scope, which allows substitute 'f' into 't f' to get new 't f'.
@@ -81,11 +79,9 @@ instance (Traversable (t f), Traversable f) => Traversable (ScopeT b t f) where
 ScopeT m >>>>= k = ScopeT $ fmap (fmap (>>= k)) m
 {-# INLINE (>>>>=) #-}
 
-#if __GLASGOW_HASKELL__ >= 805
 -- | @(>>>=) :: ... => 'ScopeT' n t f a -> (a -> f b) -> 'ScopeT' n t f b@
 instance (forall f. Functor f => Functor (t f)) => Bound (ScopeT n t) where
     (>>>=) = (>>>>=)
-#endif
 
 instance (Monad f, Functor (t f)) => Module (ScopeT b t f) f where
     (>>==) = (>>>>=)
