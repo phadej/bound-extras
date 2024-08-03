@@ -1,3 +1,7 @@
+# 0.0.3
+
+- Support GHC-8.6.5...9.10.1
+
 # 0.0.2
 
 - Add `LiftedModule` allowing to lift into 'ScopeH'.
